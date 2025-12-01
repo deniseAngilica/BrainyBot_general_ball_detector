@@ -9,7 +9,6 @@ import cv2
 import os
 import argparse
 device = "cuda" if torch.cuda.is_available() else "cpu"
-
 def arg_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--path", required=True, type=str, help="Path to input image")
@@ -20,13 +19,18 @@ def load_SAM3():
     SAM_model = Sam3Model.from_pretrained("facebook/sam3").to(device)
     SAM_processor = Sam3Processor.from_pretrained("facebook/sam3")
     return SAM_model, SAM_processor
-    
+
+MODEL,PROCESSOR=load_SAM3()
+
+
 def load_image(path):
     image = Image.open(path).convert("RGB")
     return image
 
-def detect_balls(model, processor, image, save_path):
-
+def detect_balls(image_path, save_path,model=None, processor=None ):
+    if model == None:
+        model, processor = MODEL,PROCESSOR
+    image = load_image(image_path)
     # for draughts
     text_prompts = ["draughts"]
     inputs = processor(images=image, text=text_prompts, return_tensors="pt").to(device)
@@ -72,6 +76,7 @@ def detect_balls(model, processor, image, save_path):
         largest_mask = masks[largest_idx]
         largest_mask_np = largest_mask.cpu().numpy().astype(bool)
         ys, xs = np.where(largest_mask_np)
+
         if len(xs) > 0:
             mask_width = xs.max() - xs.min() + 1
             mask_height = ys.max() - ys.min() + 1
@@ -132,20 +137,20 @@ def detect_balls(model, processor, image, save_path):
         area = len(xs)                    # number of pixels in the mask
         radius = np.sqrt(area / np.pi)    # equivalent circle radius
         centers_radii.append((cx, cy, radius))
-        # cv2.circle(overlay, (cx, cy), 5, (255, 255, 255), -1)  # white outer
-        # cv2.circle(overlay, (cx, cy), 2, (0, 0, 0), -1)        # black inner
-        # text = f"({cx}, {cy})"
+        cv2.circle(overlay, (cx, cy), 5, (255, 255, 255), -1)  # white outer
+        cv2.circle(overlay, (cx, cy), 2, (0, 0, 0), -1)        # black inner
+        text = f"({cx}, {cy})"
 
-        # cv2.putText(
-        #     overlay,
-        #     text,
-        #     (cx, cy),               # position slightly offset
-        #     cv2.FONT_HERSHEY_SIMPLEX,
-        #     1.0,
-        #     (255, 255, 255),             # white text
-        #     2,
-        #     cv2.LINE_AA
-        # )
+        cv2.putText(
+            overlay,
+            text,
+            (cx, cy),               # position slightly offset
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1.0,
+            (255, 255, 255),             # white text
+            2,
+            cv2.LINE_AA
+        )
         
 
 
@@ -169,10 +174,10 @@ def detect_balls(model, processor, image, save_path):
     with open(txt_path, "w") as f:
         for cx, cy, r in centers_radii:
             f.write(f"{cx} {cy} {r:.2f}\n")
-    # plt.figure(figsize=(10, 10))
-    # plt.imshow(overlay)
-    # plt.axis("off")
-    # plt.show()
+    plt.figure(figsize=(10, 10))
+    plt.imshow(overlay)
+    plt.axis("off")
+    plt.show()
 
 
 if __name__ == "__main__":
