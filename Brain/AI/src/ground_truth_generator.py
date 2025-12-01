@@ -131,7 +131,19 @@ def balls_process_screenshots_recursively(current_path,base_path):
         elif not full_path.endswith(".ini"):
 
             screenshot = os.path.relpath(full_path, base_path)
-            detect_balls(full_path, ground_truth/screenshot)
+            centers_radii,overlay = detect_balls(full_path)
+            base, _ = os.path.splitext(ground_truth/screenshot)
+            txt_path = base + ".txt"
+
+            with open(txt_path, "w") as f:
+                for cx, cy, r in centers_radii:
+                    f.write(f"{cx} {cy} {r:.2f}\n")
+            subprocess.run(["code", txt_path])
+            plt.imshow(overlay)
+            plt.title(f"ABSTRACTION")
+            mng = plt.get_current_fig_manager()
+            mng.resize(1920, 900)
+            plt.show()
 
 msg = "Description"
     

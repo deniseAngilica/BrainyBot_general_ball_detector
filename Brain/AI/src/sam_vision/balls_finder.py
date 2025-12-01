@@ -27,7 +27,7 @@ def load_image(path):
     image = Image.open(path).convert("RGB")
     return image
 
-def detect_balls(image_path, save_path,model=None, processor=None ):
+def detect_balls(image_path,model=None, processor=None ):
     if model == None:
         model, processor = MODEL,PROCESSOR
     image = load_image(image_path)
@@ -137,8 +137,8 @@ def detect_balls(image_path, save_path,model=None, processor=None ):
         area = len(xs)                    # number of pixels in the mask
         radius = np.sqrt(area / np.pi)    # equivalent circle radius
         centers_radii.append((cx, cy, radius))
-        cv2.circle(overlay, (cx, cy), 5, (255, 255, 255), -1)  # white outer
-        cv2.circle(overlay, (cx, cy), 2, (0, 0, 0), -1)        # black inner
+        cv2.circle(overlay, (cx, cy), int(radius), (255, 255, 255), 4)  # white outer
+        cv2.circle(overlay, (cx, cy), 10, (0, 0, 0), 2)        # black inner
         text = f"({cx}, {cy})"
 
         cv2.putText(
@@ -167,7 +167,7 @@ def detect_balls(image_path, save_path,model=None, processor=None ):
         #     2,
         #     cv2.LINE_AA,
         # )
-
+    '''
     base, _ = os.path.splitext(save_path)
     txt_path = base + ".txt"
 
@@ -178,6 +178,8 @@ def detect_balls(image_path, save_path,model=None, processor=None ):
     plt.imshow(overlay)
     plt.axis("off")
     plt.show()
+    '''
+    return centers_radii,overlay
 
 
 if __name__ == "__main__":
